@@ -4,7 +4,8 @@ The Solana Multisig Wallet is an Anchor-based smart contract designed to enable 
 
 ### Deployment
 
-This full stack project is deployed at ();
+This full stack project is deployed at https://multisig-wallet-nine.vercel.app/ .
+Video Demonstration at https://youtu.be/EFqUysjTWkU .
 
 ## Functionality
 
