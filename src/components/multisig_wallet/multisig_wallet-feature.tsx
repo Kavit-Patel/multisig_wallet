@@ -1,31 +1,47 @@
-'use client'
+"use client";
 
-import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletButton } from '../solana/solana-provider'
-import { AppHero, ellipsify } from '../ui/ui-layout'
-import { ExplorerLink } from '../cluster/cluster-ui'
-import { useMultisigWalletProgram } from './multisig_wallet-data-access'
-import { MultisigWalletCreate, MultisigWalletList } from './multisig_wallet-ui'
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletButton } from "../solana/solana-provider";
+import { AppHero, ellipsify } from "../ui/ui-layout";
+import { ExplorerLink } from "../cluster/cluster-ui";
+import { useMultisigWalletProgram } from "./multisig_wallet-data-access";
+import {
+  ApproveProposal,
+  CreateProposal,
+  ExecuteTransaction,
+  MultisigWalletCreate,
+  MultisigWalletList,
+} from "./multisig_wallet-ui";
+import { usePathname } from "next/navigation";
 
 export default function MultisigWalletFeature() {
-  const { publicKey } = useWallet()
-  const { programId } = useMultisigWalletProgram()
+  const wallet = useWallet();
+  let pathname = usePathname();
 
-  return publicKey ? (
-    <div>
-      <AppHero
-        title="MultisigWallet"
-        subtitle={
-          'Create a new account by clicking the "Create" button. The state of a account is stored on-chain and can be manipulated by calling the program\'s methods (increment, decrement, set, and close).'
-        }
-      >
-        <p className="mb-6">
-          <ExplorerLink path={`account/${programId}`} label={ellipsify(programId.toString())} />
-        </p>
-        <MultisigWalletCreate />
-      </AppHero>
-      <MultisigWalletList />
-    </div>
+  return wallet && wallet.publicKey ? (
+    <>
+      {pathname == "/multisig_wallet" ? (
+        <div className="w-[calc(100vw-30px)] md:w-[calc(100vw-300px)] lg: md:w-[calc(100vw-800px)] flex flex-col gap-10 py-6">
+          <MultisigWalletCreate wallet={wallet} />
+
+          <MultisigWalletList wallet={wallet} />
+        </div>
+      ) : pathname == "/create_proposal" ? (
+        <div className="w-[calc(100vw-30px)] md:w-[calc(100vw-300px)] lg: md:w-[calc(100vw-800px)] flex flex-col gap-10 py-6">
+          <CreateProposal wallet={wallet} />
+        </div>
+      ) : pathname == "/approve_proposal" ? (
+        <div className="w-[calc(100vw-30px)] md:w-[calc(100vw-300px)] lg: md:w-[calc(100vw-800px)] flex flex-col gap-10 py-6">
+          <ApproveProposal wallet={wallet} />
+        </div>
+      ) : pathname == "/execute_transaction" ? (
+        <div className="w-[calc(100vw-30px)] md:w-[calc(100vw-300px)] lg: md:w-[calc(100vw-500px)] flex flex-col gap-10 py-6">
+          <ExecuteTransaction wallet={wallet} />
+        </div>
+      ) : (
+        <></>
+      )}
+    </>
   ) : (
     <div className="max-w-4xl mx-auto">
       <div className="hero py-[64px]">
@@ -34,5 +50,5 @@ export default function MultisigWalletFeature() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -5,6 +5,7 @@
 html,
 body {
   height: 100%;
+  font-size: 12px;
 }
 
 .wallet-adapter-button-trigger {
@@ -16,4 +17,19 @@ body {
 .wallet-adapter-dropdown-list,
 .wallet-adapter-button {
   font-family: inherit !important;
+}
+
+.ps__rail-x,
+.ps__rail-y {
+  background-color: transparent !important;
+  z-index: 1;
+}
+.ps_thumb-x {
+  display: hidden;
+}
+.ps__rail-x-line {
+  background-color: transparent !important; /* Use !important if needed for specificity */
+}
+.ps__rail-x {
+  visibility: hidden !important;
 }

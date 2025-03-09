@@ -1,96 +1,22 @@
-# legacy-multisig_wallet
+### Solana Multisig Wallet
 
-## Getting Started
+The Solana Multisig Wallet is an Anchor-based smart contract designed to enable secure group fund management on the Solana blockchain. This program allows a predefined set of custodians to collectively manage funds via proposals, approvals, and executions. Transactions can only be executed once the required number of custodians have approved and any timelock period has expired.
 
-### Prerequisites
+### Deployment
 
-- Node v18.18.0 or higher
+This full stack project is deployed at ();
 
-- Rust v1.77.2 or higher
-- Anchor CLI 0.30.1 or higher
-- Solana CLI 1.18.17 or higher
+## Functionality
 
-### Installation
+In this project, a group of custodians (trusted individuals) can jointly manage a wallet by following a three-step process:
 
-#### Clone the repo
+Proposal Creation:
+A custodian creates a proposal that specifies the details of a transaction (e.g. transferring SOL or tokens). The proposal includes a unique name, a target program to call (e.g., the System Program for SOL transfers), a list of involved accounts, an encoded instruction , and a description. A timelock is set to allow custodians to review the proposal.
 
-```shell
-git clone <repo-url>
-cd <repo-name>
-```
+Approval:
+Other custodians review the proposal and approve it by adding their signature. Each approval is recorded to ensure that the proposal reaches the required threshold.
 
-#### Install Dependencies
+Execution:
+Once the proposal has received enough approvals and the timelock period has expired, the designated executor (in this implementation, the proposer) can execute the transaction. The program then verifies all details and invokes the target program using the stored instruction data.
 
-```shell
-pnpm install
-```
-
-#### Start the web app
-
-```
-pnpm dev
-```
-
-## Apps
-
-### anchor
-
-This is a Solana program written in Rust using the Anchor framework.
-
-#### Commands
-
-You can use any normal anchor commands. Either move to the `anchor` directory and run the `anchor` command or prefix the
-command with `pnpm`, eg: `pnpm anchor`.
-
-#### Sync the program id:
-
-Running this command will create a new keypair in the `anchor/target/deploy` directory and save the address to the
-Anchor config file and update the `declare_id!` macro in the `./src/lib.rs` file of the program.
-
-You will manually need to update the constant in `anchor/lib/counter-exports.ts` to match the new program id.
-
-```shell
-pnpm anchor keys sync
-```
-
-#### Build the program:
-
-```shell
-pnpm anchor-build
-```
-
-#### Start the test validator with the program deployed:
-
-```shell
-pnpm anchor-localnet
-```
-
-#### Run the tests
-
-```shell
-pnpm anchor-test
-```
-
-#### Deploy to Devnet
-
-```shell
-pnpm anchor deploy --provider.cluster devnet
-```
-
-### web
-
-This is a React app that uses the Anchor generated client to interact with the Solana program.
-
-#### Commands
-
-Start the web app
-
-```shell
-pnpm dev
-```
-
-Build the web app
-
-```shell
-pnpm build
-```
+Additionally, the wallet supports modifying its state, such as adding or removing custodians, adjusting the approval threshold, and changing the timelock duration.

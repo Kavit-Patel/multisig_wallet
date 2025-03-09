@@ -1,5 +1,5 @@
 {
-  "address": "coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF",
+  "address": "6x4Z1KDT9p9fVN6PnGnxRhEKiStF1ty7KDwT4Yzw7G9b",
   "metadata": {
     "name": "multisig_wallet",
     "version": "0.1.0",
@@ -8,95 +8,716 @@
   },
   "instructions": [
     {
-      "name": "close",
-      "discriminator": [98, 165, 201, 177, 108, 65, 206, 96],
+      "name": "add_custodian",
+      "discriminator": [
+        173,
+        133,
+        165,
+        124,
+        100,
+        133,
+        110,
+        203
+      ],
       "accounts": [
         {
-          "name": "payer",
+          "name": "multisig",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "multisig"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_custodian",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "approve_proposal",
+      "discriminator": [
+        136,
+        108,
+        102,
+        85,
+        98,
+        114,
+        7,
+        147
+      ],
+      "accounts": [
+        {
+          "name": "approver",
           "writable": true,
           "signer": true
         },
         {
-          "name": "multisig_wallet",
-          "writable": true
+          "name": "multisig_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  117,
+                  108,
+                  116,
+                  105,
+                  115,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "multisig_account.owner",
+                "account": "MultisigAccountState"
+              },
+              {
+                "kind": "account",
+                "path": "multisig_account.unique_name",
+                "account": "MultisigAccountState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "transaction_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  112,
+                  111,
+                  115,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "multisig_account"
+              },
+              {
+                "kind": "account",
+                "path": "transaction_account.unique_proposal_name",
+                "account": "TransactionAccountState"
+              }
+            ]
+          }
         }
       ],
       "args": []
     },
     {
-      "name": "decrement",
-      "discriminator": [106, 227, 168, 59, 248, 27, 150, 101],
+      "name": "change_threshold",
+      "discriminator": [
+        146,
+        151,
+        213,
+        63,
+        121,
+        79,
+        9,
+        29
+      ],
       "accounts": [
         {
-          "name": "multisig_wallet",
+          "name": "multisig",
           "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "multisig"
+          ]
         }
       ],
-      "args": []
-    },
-    {
-      "name": "increment",
-      "discriminator": [11, 18, 104, 9, 104, 174, 59, 33],
-      "accounts": [
+      "args": [
         {
-          "name": "multisig_wallet",
-          "writable": true
+          "name": "new_threshold",
+          "type": "u8"
         }
-      ],
-      "args": []
+      ]
     },
     {
-      "name": "initialize",
-      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
+      "name": "create_multisig_wallet",
+      "discriminator": [
+        175,
+        69,
+        3,
+        194,
+        93,
+        60,
+        54,
+        244
+      ],
       "accounts": [
         {
-          "name": "payer",
+          "name": "owner",
           "writable": true,
           "signer": true
         },
         {
-          "name": "multisig_wallet",
+          "name": "multisig_account",
           "writable": true,
-          "signer": true
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  117,
+                  108,
+                  116,
+                  105,
+                  115,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "unique_name"
+              }
+            ]
+          }
         },
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "custodians",
+          "type": {
+            "vec": "pubkey"
+          }
+        },
+        {
+          "name": "threshold",
+          "type": "u8"
+        },
+        {
+          "name": "unique_name",
+          "type": "string"
+        },
+        {
+          "name": "time_lock_duration",
+          "type": "u64"
+        }
+      ]
     },
     {
-      "name": "set",
-      "discriminator": [198, 51, 53, 241, 116, 29, 126, 194],
+      "name": "create_proposal",
+      "discriminator": [
+        132,
+        116,
+        68,
+        174,
+        216,
+        160,
+        198,
+        22
+      ],
       "accounts": [
         {
-          "name": "multisig_wallet",
-          "writable": true
+          "name": "proposer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "multisig_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  117,
+                  108,
+                  116,
+                  105,
+                  115,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "multisig_account.owner",
+                "account": "MultisigAccountState"
+              },
+              {
+                "kind": "account",
+                "path": "multisig_account.unique_name",
+                "account": "MultisigAccountState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "transaction_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  112,
+                  111,
+                  115,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "multisig_account"
+              },
+              {
+                "kind": "arg",
+                "path": "unique_proposal_name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
         {
-          "name": "value",
-          "type": "u8"
+          "name": "unique_proposal_name",
+          "type": "string"
+        },
+        {
+          "name": "program_id",
+          "type": "pubkey"
+        },
+        {
+          "name": "accounts",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "TransactionAccount"
+              }
+            }
+          }
+        },
+        {
+          "name": "data",
+          "type": "bytes"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "execute_transaction",
+      "discriminator": [
+        231,
+        173,
+        49,
+        91,
+        235,
+        24,
+        68,
+        19
+      ],
+      "accounts": [
+        {
+          "name": "executor",
+          "signer": true
+        },
+        {
+          "name": "multisig_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  117,
+                  108,
+                  116,
+                  105,
+                  115,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "multisig_account.owner",
+                "account": "MultisigAccountState"
+              },
+              {
+                "kind": "account",
+                "path": "multisig_account.unique_name",
+                "account": "MultisigAccountState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "transaction_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  112,
+                  111,
+                  115,
+                  97,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "multisig_account"
+              },
+              {
+                "kind": "account",
+                "path": "transaction_account.unique_proposal_name",
+                "account": "TransactionAccountState"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "remove_custodian",
+      "discriminator": [
+        249,
+        107,
+        34,
+        152,
+        33,
+        98,
+        180,
+        14
+      ],
+      "accounts": [
+        {
+          "name": "multisig",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "multisig"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "custodian",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_time_lock_duration",
+      "discriminator": [
+        57,
+        166,
+        102,
+        139,
+        83,
+        253,
+        128,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "multisig",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "multisig"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_duration",
+          "type": "u64"
         }
       ]
     }
   ],
   "accounts": [
     {
-      "name": "MultisigWallet",
-      "discriminator": [255, 176, 4, 245, 188, 253, 124, 25]
+      "name": "MultisigAccountState",
+      "discriminator": [
+        48,
+        44,
+        9,
+        177,
+        131,
+        67,
+        131,
+        57
+      ]
+    },
+    {
+      "name": "TransactionAccountState",
+      "discriminator": [
+        52,
+        185,
+        218,
+        171,
+        43,
+        51,
+        53,
+        45
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NoCustodian",
+      "msg": "No custodian provided !"
+    },
+    {
+      "code": 6001,
+      "name": "TooManyCustodians",
+      "msg": "Maximum 5 custodians allowed !"
+    },
+    {
+      "code": 6002,
+      "name": "NoThreshold",
+      "msg": "Threshold cannot be zero !"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidThreshold",
+      "msg": "Threshold value exceeds custodian length !"
+    },
+    {
+      "code": 6004,
+      "name": "UnAuthorizedToPropose",
+      "msg": "Only custodians can propose !"
+    },
+    {
+      "code": 6005,
+      "name": "TooManyAccounts",
+      "msg": "Accounts cannot exceed max length 10"
+    },
+    {
+      "code": 6006,
+      "name": "DuplicateCustodian",
+      "msg": "Duplicate custodian not allowed !"
+    },
+    {
+      "code": 6007,
+      "name": "UnAuthorizedApprover",
+      "msg": "You are not a custodian !"
+    },
+    {
+      "code": 6008,
+      "name": "UnAuthorizedExecutor",
+      "msg": "You are not proposer of this transaction !"
+    },
+    {
+      "code": 6009,
+      "name": "TimeLockNotExpired",
+      "msg": "Expiry time hans't reached !"
+    },
+    {
+      "code": 6010,
+      "name": "TransactionNotFound",
+      "msg": "Transaction not found !"
+    },
+    {
+      "code": 6011,
+      "name": "TransactionExecuted",
+      "msg": "Transaction already executed !"
+    },
+    {
+      "code": 6012,
+      "name": "NotEnoughApprover",
+      "msg": "Not Enough approver !"
+    },
+    {
+      "code": 6013,
+      "name": "DuplicateCustodianApproval",
+      "msg": "You have already approved this proposal"
+    },
+    {
+      "code": 6014,
+      "name": "AccountMismatch",
+      "msg": "Provided accounts doesn't match !"
+    },
+    {
+      "code": 6015,
+      "name": "AccountPermissionMismatch",
+      "msg": "Accounts doesn't fulfill required criteria !"
+    },
+    {
+      "code": 6016,
+      "name": "CustodianAlreadyExists",
+      "msg": "Custodian already exists"
+    },
+    {
+      "code": 6017,
+      "name": "CustodianNotFound",
+      "msg": "Custodian not found"
     }
   ],
   "types": [
     {
-      "name": "MultisigWallet",
+      "name": "MultisigAccountState",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "count",
+            "name": "unique_name",
+            "type": "string"
+          },
+          {
+            "name": "custodians",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "threshold",
+            "type": "u8"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "proposal_count",
+            "type": "u64"
+          },
+          {
+            "name": "time_lock_duration",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransactionAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pubkey",
+            "type": "pubkey"
+          },
+          {
+            "name": "is_signer",
+            "type": "bool"
+          },
+          {
+            "name": "is_writable",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransactionAccountState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "unique_proposal_name",
+            "type": "string"
+          },
+          {
+            "name": "program_id",
+            "type": "pubkey"
+          },
+          {
+            "name": "accounts",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "TransactionAccount"
+                }
+              }
+            }
+          },
+          {
+            "name": "data",
+            "type": "bytes"
+          },
+          {
+            "name": "signers",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "is_executed",
+            "type": "bool"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "proposer",
+            "type": "pubkey"
+          },
+          {
+            "name": "multisig",
+            "type": "pubkey"
+          },
+          {
+            "name": "time_lock_expiry",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
             "type": "u8"
           }
         ]
