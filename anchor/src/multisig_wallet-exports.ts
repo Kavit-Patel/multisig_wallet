@@ -32,7 +32,7 @@ export function getMultisigWalletProgramId(cluster: Cluster) {
     case "devnet":
     case "testnet":
       // This is the program ID for the MultisigWallet program on devnet and testnet.
-      return new PublicKey("6x4Z1KDT9p9fVN6PnGnxRhEKiStF1ty7KDwT4Yzw7G9b");
+      return new PublicKey("2gpw374gkM18X1dJiuaF7KkufdkPV23GboDeJ11PgT4h");
     case "mainnet-beta":
     default:
       return MULTISIG_WALLET_PROGRAM_ID;

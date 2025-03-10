@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/multisig_wallet.json`.
  */
 export type MultisigWallet = {
-  "address": "6x4Z1KDT9p9fVN6PnGnxRhEKiStF1ty7KDwT4Yzw7G9b",
+  "address": "2gpw374gkM18X1dJiuaF7KkufdkPV23GboDeJ11PgT4h",
   "metadata": {
     "name": "multisigWallet",
     "version": "0.1.0",
@@ -596,18 +596,28 @@ export type MultisigWallet = {
     },
     {
       "code": 6015,
-      "name": "accountPermissionMismatch",
-      "msg": "Accounts doesn't fulfill required criteria !"
-    },
-    {
-      "code": 6016,
       "name": "custodianAlreadyExists",
       "msg": "Custodian already exists"
     },
     {
-      "code": 6017,
+      "code": 6016,
       "name": "custodianNotFound",
       "msg": "Custodian not found"
+    },
+    {
+      "code": 6017,
+      "name": "missingSigner",
+      "msg": "Signer is Missing !"
+    },
+    {
+      "code": 6018,
+      "name": "invalidTransferAccounts",
+      "msg": "Transfer Accounts are invalid "
+    },
+    {
+      "code": 6019,
+      "name": "invalidDataLength",
+      "msg": "Invalid data length for transaction account slicing "
     }
   ],
   "types": [

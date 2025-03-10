@@ -1,5 +1,5 @@
 {
-  "address": "6x4Z1KDT9p9fVN6PnGnxRhEKiStF1ty7KDwT4Yzw7G9b",
+  "address": "2gpw374gkM18X1dJiuaF7KkufdkPV23GboDeJ11PgT4h",
   "metadata": {
     "name": "multisig_wallet",
     "version": "0.1.0",
@@ -590,18 +590,28 @@
     },
     {
       "code": 6015,
-      "name": "AccountPermissionMismatch",
-      "msg": "Accounts doesn't fulfill required criteria !"
-    },
-    {
-      "code": 6016,
       "name": "CustodianAlreadyExists",
       "msg": "Custodian already exists"
     },
     {
-      "code": 6017,
+      "code": 6016,
       "name": "CustodianNotFound",
       "msg": "Custodian not found"
+    },
+    {
+      "code": 6017,
+      "name": "MissingSigner",
+      "msg": "Signer is Missing !"
+    },
+    {
+      "code": 6018,
+      "name": "InvalidTransferAccounts",
+      "msg": "Transfer Accounts are invalid "
+    },
+    {
+      "code": 6019,
+      "name": "InvalidDataLength",
+      "msg": "Invalid data length for transaction account slicing "
     }
   ],
   "types": [

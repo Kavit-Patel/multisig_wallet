@@ -2,7 +2,7 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("6x4Z1KDT9p9fVN6PnGnxRhEKiStF1ty7KDwT4Yzw7G9b");
+declare_id!("2gpw374gkM18X1dJiuaF7KkufdkPV23GboDeJ11PgT4h");
 
 #[program]
 pub mod multisig_wallet {
@@ -66,51 +66,64 @@ pub mod multisig_wallet {
 
       Ok(())
     }
-    pub fn execute_transaction(ctx:Context<ExecuteTransaction>)->Result<()>{
+    pub fn execute_transaction(ctx: Context<ExecuteTransaction>) -> Result<()> {
       let multisig_account = &ctx.accounts.multisig_account;
       let transaction_account = &mut ctx.accounts.transaction_account;
       let executor = &ctx.accounts.executor;
 
-      require!(transaction_account.multisig == multisig_account.key(),ErrorCode::TransactionNotFound);
-      require!(!transaction_account.is_executed,ErrorCode::TransactionExecuted);
-      require!(executor.key()==transaction_account.proposer,ErrorCode::UnAuthorizedExecutor);
+      require!(transaction_account.multisig == multisig_account.key(), ErrorCode::TransactionNotFound);
+      require!(!transaction_account.is_executed, ErrorCode::TransactionExecuted);
+      require!(executor.key() == transaction_account.proposer, ErrorCode::UnAuthorizedExecutor);
       
       let current_time = Clock::get()?.unix_timestamp as u64;
-      
-      require!(current_time>transaction_account.time_lock_expiry,ErrorCode::TimeLockNotExpired);
-      require!(transaction_account.signers.len() as u8>=multisig_account.threshold,ErrorCode::NotEnoughApprover);
-      require!(ctx.remaining_accounts.len() == transaction_account.accounts.len(),ErrorCode::AccountMismatch);
+      require!(current_time >= transaction_account.time_lock_expiry, ErrorCode::TimeLockNotExpired);
+      require!(transaction_account.signers.len() as u8 >= multisig_account.threshold, ErrorCode::NotEnoughApprover);
+      require!(ctx.remaining_accounts.len() == transaction_account.accounts.len(), ErrorCode::AccountMismatch);
       
       for (i, account) in ctx.remaining_accounts.iter().enumerate() {
-        let expected = &transaction_account.accounts[i];
-        
-        require!(*account.key == expected.pubkey, ErrorCode::AccountMismatch);
-    }
-    let tx = anchor_lang::solana_program::instruction::Instruction {
-      program_id: transaction_account.program_id,
-      accounts: ctx.remaining_accounts.iter().enumerate().map(|(i, acc)| {
-          let original = &transaction_account.accounts[i];
-          AccountMeta {
-              pubkey: *acc.key,
-              is_signer: original.is_signer,
-              is_writable: original.is_writable,
-          }
-      }).collect(),
-      data: transaction_account.data.clone(),
-  };
+          let expected = &transaction_account.accounts[i];
+          require!(*account.key == expected.pubkey, ErrorCode::AccountMismatch);
+      }
+      
+          
+          if ctx.remaining_accounts.len() >= 2 {
+              let from_account = &ctx.remaining_accounts[0];
+              let to_account = &ctx.remaining_accounts[1];
 
-  let multisig_signer_seeds: &[&[u8]] = &[
-      b"multisig",
-      multisig_account.owner.as_ref(),
-      multisig_account.unique_name.as_bytes(),
-      &[multisig_account.bump],
-  ];
-  
-  anchor_lang::solana_program::program::invoke_signed(&tx, &ctx.remaining_accounts, &[multisig_signer_seeds])?;
-  
+              if transaction_account.data.len() < 12 {
+                return Err(ErrorCode::InvalidDataLength.into());
+              }
+              let amount = u64::from_le_bytes(transaction_account.data[4..12].try_into().unwrap());
+              
+              
+              if from_account.key == &multisig_account.key() {
+                  **from_account.try_borrow_mut_lamports()? -= amount;
+                  **to_account.try_borrow_mut_lamports()? += amount;
+              } 
+              else if to_account.key == &multisig_account.key() {
+                  require!(from_account.is_signer, ErrorCode::MissingSigner);
+                  
+                  let transfer_ix = anchor_lang::solana_program::system_instruction::transfer(
+                      from_account.key,
+                      to_account.key,
+                      amount
+                  );
+                  
+                  anchor_lang::solana_program::program::invoke(
+                      &transfer_ix,
+                      &[from_account.clone(), to_account.clone()]
+                  )?;
+                  
+              } else {
+                  return Err(ErrorCode::InvalidTransferAccounts.into());
+              }
+          } else {
+              return Err(ErrorCode::AccountMismatch.into());
+          }
+      
       transaction_account.is_executed = true;
       Ok(())
-    }
+  }
 
     pub fn add_custodian(
       ctx: Context<ModifyCustodians>,
@@ -345,10 +358,14 @@ enum ErrorCode {
   DuplicateCustodianApproval,
   #[msg("Provided accounts doesn't match !")]
   AccountMismatch,
-  #[msg("Accounts doesn't fulfill required criteria !")]
-  AccountPermissionMismatch,
   #[msg("Custodian already exists")]
     CustodianAlreadyExists,
   #[msg("Custodian not found")]
     CustodianNotFound,
+  #[msg("Signer is Missing !")]
+  MissingSigner,
+  #[msg("Transfer Accounts are invalid ")]
+  InvalidTransferAccounts,
+  #[msg("Invalid data length for transaction account slicing ")]
+  InvalidDataLength
 }
