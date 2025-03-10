@@ -1,6 +1,11 @@
 "use client";
 
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import {
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+} from "@solana/web3.js";
 import React, { useEffect, useMemo, useState } from "react";
 import { ellipsify } from "../ui/ui-layout";
 import { ExplorerLink } from "../cluster/cluster-ui";
@@ -30,7 +35,6 @@ export function MultisigWalletCreate({
 }) {
   const { multisigAccounts, initializeMultisigAccount } =
     useMultisigWalletProgram();
-  console.log("Accounts ", multisigAccounts.data);
   const { multisigAccountQuery } = useMultisigWalletProgramAccount({
     account: wallet.publicKey!,
   });
@@ -58,8 +62,10 @@ export function MultisigWalletCreate({
   };
 
   useEffect(() => {
-    multisigAccounts.refetch();
-    multisigAccountQuery.refetch();
+    if (!initializeMultisigAccount.isPending) {
+      multisigAccounts.refetch();
+      multisigAccountQuery.refetch();
+    }
   }, [initializeMultisigAccount.isPending]);
   return (
     <>
@@ -134,7 +140,11 @@ export function MultisigWalletList({ wallet }: { wallet: WalletContextState }) {
   });
 
   if (getProgramAccount.isPending || multisigAccountQuery.isPending) {
-    return <span className="loading loading-spinner loading-lg"></span>;
+    return (
+      <div className="w-full h-44 flex justify-center items-center ">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
   }
   return (
     <>
@@ -237,12 +247,13 @@ export function CreateProposal({ wallet }: { wallet: WalletContextState }) {
     | undefined
   >(undefined);
   const [selectedMultisig, setSelectedMultisig] = useState("");
+  const [transactionType, setTransactionType] = useState("");
   const [proposalName, setProposalName] = useState("");
   const [programId, setProgramId] = useState(
     "11111111111111111111111111111111"
   );
   const [account, setAccount] = useState("");
-  const [data, setData] = useState("");
+  const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
 
   useEffect(() => {
@@ -261,30 +272,69 @@ export function CreateProposal({ wallet }: { wallet: WalletContextState }) {
   }, [multisigAccounts, multisigAccountsData, wallet.publicKey, multisigs]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const accountsArr = [
-      {
-        pubkey: new PublicKey(selectedMultisig),
-        isSigner: false,
-        isWritable: true,
-      },
-      { pubkey: new PublicKey(account), isSigner: false, isWritable: true },
-    ];
-    const formatedData = new Uint8Array(8);
-    const view = new DataView(formatedData.buffer);
-    view.setBigUint64(0, BigInt(+data * LAMPORTS_PER_SOL), false);
+    const accountsArr =
+      transactionType == "From Multisig Wallet"
+        ? [
+            {
+              pubkey: new PublicKey(selectedMultisig),
+              isSigner: false,
+              isWritable: true,
+            },
+            {
+              pubkey: new PublicKey(account),
+              isSigner: false,
+              isWritable: true,
+            },
+
+            {
+              pubkey: SystemProgram.programId,
+              isSigner: false,
+              isWritable: false,
+            },
+          ]
+        : [
+            {
+              pubkey: new PublicKey(account),
+              isSigner: true,
+              isWritable: true,
+            },
+            {
+              pubkey: new PublicKey(selectedMultisig),
+              isSigner: false,
+              isWritable: true,
+            },
+
+            {
+              pubkey: SystemProgram.programId,
+              isSigner: false,
+              isWritable: false,
+            },
+          ];
+    const transferInstruction =
+      transactionType == "From Multisig Wallet"
+        ? SystemProgram.transfer({
+            fromPubkey: new PublicKey(selectedMultisig),
+            toPubkey: new PublicKey(account),
+            lamports: Number(amount) * LAMPORTS_PER_SOL,
+          })
+        : SystemProgram.transfer({
+            fromPubkey: new PublicKey(account),
+            toPubkey: new PublicKey(selectedMultisig),
+            lamports: Number(amount) * LAMPORTS_PER_SOL,
+          });
     await createProposal.mutateAsync({
       wallet,
       uniqueProposalName: proposalName,
       programId: new PublicKey(programId),
       multisigPubkey: new PublicKey(selectedMultisig),
       accountsArr,
-      data: Array.from(formatedData),
+      data: transferInstruction.data,
       description,
     });
     setProposalName("");
     setSelectedMultisig("");
     setAccount("");
-    setData("");
+    setAmount("");
     setDescription("");
   };
   return (
@@ -316,6 +366,21 @@ export function CreateProposal({ wallet }: { wallet: WalletContextState }) {
               </select>
             </div>
             <div>
+              <label className="block mb-1">Select Transfer Type</label>
+              <select
+                value={transactionType}
+                onChange={(e) => setTransactionType(e.target.value)}
+                className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+                required
+              >
+                <option value="">--Select--</option>
+                <option value="From Multisig Wallet">
+                  From Multisig Wallet
+                </option>
+                <option value="To Multisig Wallet">To Multisig Wallet</option>
+              </select>
+            </div>
+            <div>
               <label className="block mb-1">Unique Proposal Name</label>
               <input
                 type="text"
@@ -342,7 +407,11 @@ export function CreateProposal({ wallet }: { wallet: WalletContextState }) {
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
                 className="w-full p-2 rounded bg-gray-800 border border-gray-700"
-                placeholder="PublicKey sender or receiver"
+                placeholder={`${
+                  transactionType == "From Multisig Wallet"
+                    ? " Receiver Address "
+                    : " Sender Address "
+                }`}
                 required
               />
             </div>
@@ -350,9 +419,10 @@ export function CreateProposal({ wallet }: { wallet: WalletContextState }) {
               <label className="block mb-1">Sol Tobe Transferred</label>
               <input
                 type="text"
-                value={data}
-                onChange={(e) => setData(e.target.value)}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+                placeholder="Amount in sol"
                 required
               />
             </div>
@@ -442,8 +512,6 @@ export function ApproveProposal({ wallet }: { wallet: WalletContextState }) {
     }
   }, [transactionAccounts, multisigAccounts, wallet.publicKey, proposals]);
 
-  console.log("Pending proposals", proposals);
-
   const handleApprove = async (
     multisigPubkey: PublicKey,
     uniqueProposalName: string
@@ -466,41 +534,43 @@ export function ApproveProposal({ wallet }: { wallet: WalletContextState }) {
       ) : proposals?.length === 0 ? (
         <p className="text-center">No proposals pending approval.</p>
       ) : (
-        <div className="w-full h-full flex justify-center items-center">
-          <ul className="space-y-4">
-            {proposals?.map((proposal, idx) => (
-              <li
-                key={idx}
-                className="p-4 bg-gray-800 rounded shadow text-center"
-              >
-                <h2 className="text-sm font-semibold flex gap-3">
-                  <span>Proposal Name: </span>
-                  <span className="">
-                    {proposal.account.uniqueProposalName}
-                  </span>
-                </h2>
-                <p className="text-sm font-semibold flex gap-3">
-                  <span>Proposal Desc: </span>
-                  <span className="">{proposal.account.description}</span>
-                </p>
-                <button
-                  onClick={() =>
-                    handleApprove(
-                      proposal.account.multisig,
-                      proposal.account.uniqueProposalName
-                    )
-                  }
-                  className="mt-2 px-4 py-2 bg-green-600 rounded hover:bg-green-500 text-gray-600 font-semibold w-full h-full"
+        <div className="w-full h-h-[calc(100vh-240px)] flex justify-center items-center">
+          <PerfectScrollbar>
+            <ul className="space-y-4">
+              {proposals?.map((proposal, idx) => (
+                <li
+                  key={idx}
+                  className="p-4 bg-gray-800 rounded shadow text-center"
                 >
-                  {approveProposal.isPending ? (
-                    <Loader width={10} height={10} color="gray-400" />
-                  ) : (
-                    "Approve Proposal"
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
+                  <h2 className="text-sm font-semibold flex gap-3">
+                    <span>Proposal Name: </span>
+                    <span className="">
+                      {proposal.account.uniqueProposalName}
+                    </span>
+                  </h2>
+                  <p className="text-sm font-semibold flex gap-3">
+                    <span>Proposal Desc: </span>
+                    <span className="">{proposal.account.description}</span>
+                  </p>
+                  <button
+                    onClick={() =>
+                      handleApprove(
+                        proposal.account.multisig,
+                        proposal.account.uniqueProposalName
+                      )
+                    }
+                    className="mt-2 px-4 py-2 bg-green-600 rounded hover:bg-green-500 text-gray-600 font-semibold w-full h-full"
+                  >
+                    {approveProposal.isPending ? (
+                      <Loader width={10} height={10} color="gray-400" />
+                    ) : (
+                      "Approve Proposal"
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </PerfectScrollbar>
         </div>
       )}
     </>
@@ -589,42 +659,54 @@ export function ExecuteTransaction({ wallet }: { wallet: WalletContextState }) {
       ) : proposals?.length === 0 ? (
         <p className="text-center">No Pending Approval.</p>
       ) : (
-        <div className="w-full h-full flex justify-center items-center">
-          <ul className="space-y-4">
-            {proposals?.map((proposal, idx) => (
-              <li
-                key={idx}
-                className="p-4 bg-gray-800 rounded shadow text-center"
-              >
-                <h2 className="text-sm font-semibold flex gap-3">
-                  <span>Proposal Name: </span>
-                  <span className="">
-                    {proposal.account.uniqueProposalName}
-                  </span>
-                </h2>
-                <p className="text-sm font-semibold flex gap-3">
-                  <span>Proposal Desc: </span>
-                  <span className="">{proposal.account.description}</span>
-                </p>
-                <button
-                  onClick={() =>
-                    handleExecute(
-                      proposal.account.multisig,
-                      proposal.publicKey,
-                      proposal.account.accounts
-                    )
-                  }
-                  className="mt-2 px-4 py-2 bg-green-600 rounded hover:bg-green-500 text-gray-600 font-semibold w-full h-full"
+        <div className="w-full h-[calc(100vh-240px)] flex justify-center items-center">
+          <PerfectScrollbar>
+            <ul className="space-y-4">
+              {proposals?.map((proposal, idx) => (
+                <li
+                  key={idx}
+                  className="p-4 bg-gray-800 rounded shadow text-center"
                 >
-                  {executeTransaction.isPending ? (
-                    <Loader width={10} height={10} color="gray-400" />
-                  ) : (
-                    "Execute Transaction"
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
+                  <h2 className="text-sm font-semibold flex gap-3">
+                    <span>Proposal Name: </span>
+                    <span className="">
+                      {proposal.account.uniqueProposalName}
+                    </span>
+                  </h2>
+                  <p className="text-sm font-semibold flex gap-3">
+                    <span>Proposal Desc: </span>
+                    <span className="">{proposal.account.description}</span>
+                  </p>
+                  <p className="text-sm font-semibold flex gap-3">
+                    <span>Time Lock </span>
+                    <span className="">
+                      {`${new Date(
+                        +proposal.account.timeLockExpiry * 1000
+                      ).toLocaleDateString()} ${new Date(
+                        +proposal.account.timeLockExpiry * 1000
+                      ).toLocaleTimeString()}`}
+                    </span>
+                  </p>
+                  <button
+                    onClick={() =>
+                      handleExecute(
+                        proposal.account.multisig,
+                        proposal.publicKey,
+                        proposal.account.accounts
+                      )
+                    }
+                    className="mt-2 px-4 py-2 bg-green-600 rounded hover:bg-green-500 text-gray-600 font-semibold w-full h-full"
+                  >
+                    {executeTransaction.isPending ? (
+                      <Loader width={10} height={10} color="gray-400" />
+                    ) : (
+                      "Execute Transaction"
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </PerfectScrollbar>
         </div>
       )}
     </>

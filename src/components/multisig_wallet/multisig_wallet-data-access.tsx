@@ -205,7 +205,7 @@ export function useMultisigWalletProgramAccount({
         isSigner: boolean;
         isWritable: boolean;
       }[];
-      data: number[];
+      data: Buffer;
       description: string;
     }) => {
       const [transactionPda] = PublicKey.findProgramAddressSync(
@@ -312,7 +312,13 @@ export function useMultisigWalletProgramAccount({
           multisigAccount: multisigPubkey,
           transactionAccount: transactionPubkey,
         } as any)
-        .remainingAccounts(accounts)
+        .remainingAccounts(
+          accounts.map((acc) => ({
+            pubkey: acc.pubkey,
+            isSigner: acc.isSigner,
+            isWritable: acc.isWritable,
+          }))
+        )
         .rpc();
       const latestBlockHash = await connection.getLatestBlockhash();
       await connection.confirmTransaction({
